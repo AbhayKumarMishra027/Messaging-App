@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models.user import User
+from app.models import User
 
 
 def user_exists(db: Session, email: str, phone_number: str) -> bool:

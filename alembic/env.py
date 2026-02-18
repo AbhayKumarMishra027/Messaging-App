@@ -11,7 +11,7 @@ import os
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.database import Base
-from app.models.user import User
+from app.verification.user import User
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

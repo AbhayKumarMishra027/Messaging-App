@@ -4,7 +4,7 @@ from app.database import SessionLocal
 import random
 import hashlib
 from datetime import datetime, timedelta, timezone
-from app.models.otp_verification import OTPVerification, OTPPurpose
+from app.verification.otp_verification import OTPVerification, OTPPurpose
 
 
 router = APIRouter()
