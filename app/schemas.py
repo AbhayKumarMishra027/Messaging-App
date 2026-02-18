@@ -5,6 +5,7 @@ from datetime import datetime
 
 class UserBase(BaseModel):
     phone_number: str= Field(...,min_length=10,max_length=15)
+    email: str= Field(...,max_length=128)
     first_name: str=Field(...,min_length=1,max_length=32)
     last_name: Optional[str] = Field(None, max_length=32)
     about: Optional[str] = Field("Hey there! I am a User.", max_length=128)
