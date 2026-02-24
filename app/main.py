@@ -1,8 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import or_
 from app import schemas, database
 from app import models
+from uuid import UUID
+
 
 app=FastAPI()
 
@@ -37,4 +40,34 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         db.rollback()
         print(f"DATABASE ERROR: {e}")
         raise HTTPException(status_code=400, detail=f"Database error")
+    
+@app.post("/messages/", response_model=schemas.MessageResponse)
+def send_message(message: schemas.MessageCreate, sender_id: UUID, db: Session = Depends(get_db)):
+    conversation = db.query(models.Conversation).filter(
+        or_(
+            (models.Conversation.user1_id == sender_id) & (models.Conversation.user2_id == message.receiver_id),
+            (models.Conversation.user1_id == message.receiver_id) & (models.Conversation.user2_id == sender_id)
+        )
+    ).first()
+
+    if not conversation:
+        conversation = models.Conversation(
+            user1_id=sender_id,
+            user2_id=message.receiver_id
+        )
+        db.add(conversation)
+        db.commit()
+        db.refresh(conversation)
+
+    new_message = models.Message(
+        conversation_id=conversation.id,
+        sender_id=sender_id,
+        content=message.content
+    )
+
+    db.add(new_message)
+    db.commit()
+    db.refresh(new_message)
+
+    return new_message
 
