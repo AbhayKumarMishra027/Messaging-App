@@ -5,6 +5,7 @@ from sqlalchemy import or_
 from app import schemas, database
 from app import models
 from uuid import UUID
+from typing import List
 
 
 app=FastAPI()
@@ -71,3 +72,33 @@ def send_message(message: schemas.MessageCreate, sender_id: UUID, db: Session = 
 
     return new_message
 
+@app.get("/conversations/", response_model=List[schemas.ConversationResponse])
+def get_conversations(user_id: UUID, db: Session = Depends(get_db)):
+    conversations = db.query(models.Conversation).filter(
+        or_(
+            models.Conversation.user1_id == user_id,
+            models.Conversation.user2_id == user_id
+        )
+    ).all()
+
+    return conversations
+
+@app.get("/messages/{conversation_id}", response_model=List[schemas.MessageResponse])
+def get_messages(
+    conversation_id: UUID,
+    current_user_id: UUID,
+    db: Session = Depends(get_db)
+):
+    conversation = db.query(models.Conversation).filter(models.Conversation.id == conversation_id).first()
+    
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+        
+    if conversation.user1_id != current_user_id and conversation.user2_id != current_user_id:
+        raise HTTPException(status_code=403, detail="You do not have access to this chat")
+
+    messages = db.query(models.Message).filter(
+        models.Message.conversation_id == conversation_id
+    ).order_by(models.Message.created_at.asc()).all()
+
+    return messages
